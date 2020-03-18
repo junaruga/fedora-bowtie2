@@ -15,7 +15,11 @@ Source1: bowtie2-2.4.1-tests.tgz
 Requires: perl
 Requires: python3
 BuildRequires: gcc-c++
+BuildRequires: libasan
+BuildRequires: libubsan
 BuildRequires: perl
+BuildRequires: perl(Clone)
+BuildRequires: perl(Test::Deep)
 BuildRequires: python3
 BuildRequires: tbb-devel
 BuildRequires: zlib-devel
@@ -46,6 +50,11 @@ gapped, local, and paired-end alignment modes.
 # Remove the directory to avoid building bowtie with bundled libraries.
 rm -rf third_party
 
+# Invalid double quote characters are used in the code.
+# https://github.com/BenLangmead/bowtie2/issues/278
+sed -i 's/“/"/g' processor_support.h
+sed -i 's/”/"/g' processor_support.h
+
 
 %build
 # Set flags considering the upstream testing cases for each architecture.
@@ -59,16 +68,22 @@ export NO_TBB=1
 
 
 %install
-%make_install prefix="%{_usr}" DESTDIR="%{buildroot}"
+%make_install PREFIX="%{_usr}" DESTDIR="%{buildroot}"
 
-# Install bowtie-*-debug commands used by `bowtie --debug`.
-# Install bowtie-*-sanitized commands used by `bowtie --sanitized`.
-for cmd in bowtie-*-{debug,sanitized}; do
+# Install bowtie2-*-debug commands used by `bowtie2 --debug`.
+# Install bowtie2-*-sanitized commands used by `bowtie2 --sanitized`.
+for cmd in bowtie2-*-{debug,sanitized}; do
   cp -p "${cmd}" %{buildroot}/%{_bindir}/
 done
 
 
 %check
+for cmd in bowtie2 bowtie2-build bowtie2-inspect; do
+  ./"${cmd}" --version | grep 'version %{version}'
+done
+
+tar xzvf %{SOURCE1}
+
 ASAN_OPTIONS="halt_on_error=1" \
 UBSAN_OPTIONS="halt_on_error=1" \
 scripts/test/simple_tests.pl \

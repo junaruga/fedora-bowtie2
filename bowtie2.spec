@@ -2,9 +2,10 @@ Name: bowtie2
 Version: 2.4.1
 Release: 1%{?dist}
 Summary: An ultrafast and memory-efficient read aligner
-# bowtie2: GPLv3+
-# tinythread.{h,cpp}: zlib
-# fast_mutex.h: zlib
+# * bowtie2: GPLv3+
+# * TinyThread++: zlib, for files: tinythread.{h,cpp} fast_mutex.h
+#   https://tinythreadpp.bitsnbites.eu/
+#   https://gitorious.org/tinythread/tinythreadpp
 License: GPLv3+ and zlib
 URL: http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
 Source0: https://downloads.sourceforge.net/project/bowtie-bio/%{name}/%{version}/%{name}-%{version}-source.zip
@@ -27,11 +28,7 @@ BuildRequires: zlib-devel
 ExcludeArch: i686 armv7hl
 
 # TinyThread++
-# https://tinythreadpp.bitsnbites.eu/
-# https://gitorious.org/tinythread/tinythreadpp
 Provides: bundled(tiny-thread) = 1.1
-# TODO: fast_mutex
-Provides: bundled(fast-mutex)
 
 
 %description
@@ -55,6 +52,12 @@ rm -rf third_party
 sed -i 's/“/"/g' processor_support.h
 sed -i 's/”/"/g' processor_support.h
 
+# Fix shebang to use the system interpreters.
+sed -i '1s|/usr/bin/env perl|/usr/bin/perl|' bowtie2
+for file in bowtie2-{build,inspect}; do
+  sed -i '1s|/usr/bin/env python3|%{__python3}|' "${file}"
+done
+
 
 %build
 # Set flags considering the upstream testing cases for each architecture.
@@ -64,26 +67,28 @@ export POPCNT_CAPABILITY=0
 export NO_TBB=1
 %endif
 
-%make_build allall
+# Build with the target "all" rather than "allall"
+# to skip the builds of debug and sanitized binaries
+# saving the build time.
+%make_build all
 
 
 %install
 %make_install PREFIX="%{_usr}" DESTDIR="%{buildroot}"
 
-# Install bowtie2-*-debug commands used by `bowtie2 --debug`.
-# Install bowtie2-*-sanitized commands used by `bowtie2 --sanitized`.
-for cmd in bowtie2-*-{debug,sanitized}; do
-  cp -p "${cmd}" %{buildroot}/%{_bindir}/
-done
-
 
 %check
-for cmd in bowtie2 bowtie2-build bowtie2-inspect; do
+for cmd in bowtie2 bowtie2-{build,inspect}; do
   ./"${cmd}" --version | grep 'version %{version}'
 done
 
 tar xzvf %{SOURCE1}
 
+# Skip tests for the debug and sanitized binaries not shipped.
+sed -i '/my $binary_type/ s/"release", "debug", "sanitized"/"release"/' \
+  scripts/test/simple_tests.pl
+
+# See scripts/test/simple_tests.sh for the options.
 ASAN_OPTIONS="halt_on_error=1" \
 UBSAN_OPTIONS="halt_on_error=1" \
 scripts/test/simple_tests.pl \
@@ -93,28 +98,19 @@ scripts/test/simple_tests.pl \
 
 
 %files
+%doc AUTHORS MANUAL MANUAL.markdown NEWS TUTORIAL
 %license LICENSE
 %{_bindir}/bowtie2
 %{_bindir}/bowtie2-align-l
-%{_bindir}/bowtie2-align-l-debug
-%{_bindir}/bowtie2-align-l-sanitized
 %{_bindir}/bowtie2-align-s
-%{_bindir}/bowtie2-align-s-debug
-%{_bindir}/bowtie2-align-s-sanitized
 %{_bindir}/bowtie2-build
 %{_bindir}/bowtie2-build-l
-%{_bindir}/bowtie2-build-l-debug
-%{_bindir}/bowtie2-build-l-sanitized
 %{_bindir}/bowtie2-build-s
-%{_bindir}/bowtie2-build-s-debug
-%{_bindir}/bowtie2-build-s-sanitized
 %{_bindir}/bowtie2-inspect
 %{_bindir}/bowtie2-inspect-l
-%{_bindir}/bowtie2-inspect-l-debug
-%{_bindir}/bowtie2-inspect-l-sanitized
 %{_bindir}/bowtie2-inspect-s
-%{_bindir}/bowtie2-inspect-s-debug
-%{_bindir}/bowtie2-inspect-s-sanitized
 
 
 %changelog
+* Sat Mar 28 2020 Jun Aruga <jaruga@redhat.com> - 2.4.1-1
+- Initial package

@@ -22,10 +22,13 @@ BuildRequires: perl
 BuildRequires: perl(Clone)
 BuildRequires: perl(Test::Deep)
 BuildRequires: python3
+%ifnarch x86_64
+BuildRequires: simde-devel
+%endif
 BuildRequires: tbb-devel
 BuildRequires: zlib-devel
 # 32-bit CPU architectures are not supported. See Makefile.
-ExcludeArch: i686 armv7hl
+ExcludeArch: %{ix86} %{arm}
 
 # TinyThread++
 Provides: bundled(tiny-thread) = 1.1

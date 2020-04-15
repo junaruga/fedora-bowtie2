@@ -25,10 +25,15 @@ BuildRequires: python3
 %ifnarch x86_64
 BuildRequires: simde-devel
 %endif
+%ifarch x86_64
 BuildRequires: tbb-devel
+%endif
 BuildRequires: zlib-devel
-# 32-bit CPU architectures are not supported. See Makefile.
-ExcludeArch: %{ix86} %{arm}
+# * 32-bit CPU architectures: not supported. See Makefile.
+# * s390x: not ready to ship it. We take the conservative way.
+#   as it is used for the research.
+#   https://github.com/BenLangmead/bowtie2/issues/286
+ExcludeArch: %{ix86} %{arm} s390x
 
 # TinyThread++
 Provides: bundled(tiny-thread) = 1.1

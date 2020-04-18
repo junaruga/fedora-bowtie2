@@ -13,14 +13,18 @@ Source0: https://downloads.sourceforge.net/project/bowtie-bio/%{name}/%{version}
 # cd bowtie2 && git checkout v2.4.1
 # tar czvf bowtie2-2.4.1-tests.tgz scripts/test/
 Source1: bowtie2-2.4.1-tests.tgz
-Requires: perl
 Requires: python3
 BuildRequires: gcc-c++
 BuildRequires: libasan
 BuildRequires: libubsan
-BuildRequires: perl
+BuildRequires: perl-generators
+BuildRequires: perl-interpreter
 BuildRequires: perl(Clone)
+BuildRequires: perl(File::Which)
+BuildRequires: perl(FindBin)
+BuildRequires: perl(Sys::Hostname)
 BuildRequires: perl(Test::Deep)
+BuildRequires: perl(lib)
 BuildRequires: python3
 %ifnarch x86_64
 BuildRequires: simde-devel
@@ -61,7 +65,7 @@ sed -i 's/“/"/g' processor_support.h
 sed -i 's/”/"/g' processor_support.h
 
 # Fix shebang to use the system interpreters.
-sed -i '1s|/usr/bin/env perl|/usr/bin/perl|' bowtie2
+sed -i '1s|/usr/bin/env perl|%{_bindir}/perl|' bowtie2
 for file in bowtie2-{build,inspect}; do
   sed -i '1s|/usr/bin/env python3|%{__python3}|' "${file}"
 done
@@ -82,7 +86,7 @@ export NO_TBB=1
 
 
 %install
-%make_install PREFIX="%{_usr}" DESTDIR="%{buildroot}"
+%make_install PREFIX="%{_prefix}"
 
 
 %check

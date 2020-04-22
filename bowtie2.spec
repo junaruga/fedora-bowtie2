@@ -26,11 +26,10 @@ BuildRequires: perl(Sys::Hostname)
 BuildRequires: perl(Test::Deep)
 BuildRequires: perl(lib)
 BuildRequires: python3
-%ifnarch x86_64
-BuildRequires: simde-devel
-%endif
 %ifarch x86_64
 BuildRequires: tbb-devel
+%else
+BuildRequires: simde-devel
 %endif
 BuildRequires: zlib-devel
 # * 32-bit CPU architectures: not supported. See Makefile.
@@ -54,15 +53,14 @@ genome, its memory footprint is typically around 3.2 GB. Bowtie 2 supports
 gapped, local, and paired-end alignment modes.
 
 %prep
-%setup -q
+%autosetup
 
 # Remove the directory to avoid building bowtie with bundled libraries.
 rm -rf third_party
 
 # Invalid double quote characters are used in the code.
 # https://github.com/BenLangmead/bowtie2/issues/278
-sed -i 's/“/"/g' processor_support.h
-sed -i 's/”/"/g' processor_support.h
+sed -e 's/“/"/g' -e 's/”/"/g' -i processor_support.h
 
 # Fix shebang to use the system interpreters.
 sed -i '1s|/usr/bin/env perl|%{_bindir}/perl|' bowtie2

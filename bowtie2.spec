@@ -14,7 +14,6 @@ Source0: https://github.com/BenLangmead/%{name}/archive/v%{version}.tar.gz
 # Fix to build with given CXXFLAGS.
 # https://github.com/BenLangmead/bowtie2/pull/296
 Patch0: bowtie2-makefile-cxxflags.patch
-Requires: python3
 BuildRequires: gcc-c++
 BuildRequires: help2man
 BuildRequires: libasan
